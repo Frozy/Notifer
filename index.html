@@ -16,16 +16,6 @@ body {
   padding: 20px;
 }
 .container { text-align: center; max-width: 400px; }
-.icon { 
-  width: 80px; height: 80px; 
-  background: linear-gradient(135deg, #8b5cf6, #6d28d9); 
-  border-radius: 20px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  margin: 0 auto 24px; 
-  font-size: 40px; 
-}
 .btn { 
   background: #8b5cf6; 
   color: white; 
@@ -37,45 +27,73 @@ body {
   width: 100%; 
   margin: 10px 0;
 }
-.status { margin-top: 20px; padding: 10px; border-radius: 8px; }
+.status { 
+  margin-top: 20px; 
+  padding: 10px; 
+  border-radius: 8px; 
+  font-size: 14px;
+}
 .success { background: #22c55e; color: white; }
 .error { background: #ef4444; color: white; }
+.info { background: #3b82f6; color: white; }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="icon">🔔</div>
-  <h1>Notifier</h1>
-  <p style="color: #94a3b8; margin: 20px 0;">Нажми кнопку чтобы подписаться на уведомления</p>
-  <button class="btn" onclick="requestNotif()">🔔 Разрешить уведомления</button>
-  <div id="status"></div>
+  <h1>🔔 Notifier</h1>
+  <p style="color: #94a3b8; margin: 20px 0;">Нажми кнопку чтобы подписаться</p>
+  <button class="btn" onclick="subscribe()">🔔 Подписаться</button>
+  <div id="status" class="info">Загрузка OneSignal...</div>
 </div>
 
-<script>
-async function requestNotif() {
-  const status = document.getElementById('status');
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>console.log('Скрипт загружен');
+
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  console.log('OneSignal загружен!', OneSignal);
   
-  if (!('Notification' in window)) {
-    status.innerHTML = '<div class="status error">❌ Уведомления не поддерживаются</div>';
+  await OneSignal.init({
+    appId: "fa17302b-89af-4bc5-9d84-1e86997e06c2",
+  });
+  
+  console.log('OneSignal инициализирован!');
+  
+  const status = document.getElementById('status');
+  status.textContent = '✅ OneSignal готов! Нажми кнопку.';
+  status.className = 'status info';
+});
+
+async function subscribe() {
+  const status = document.getElementById('status');
+  console.log('Нажата кнопка подписки');
+  
+  if (!window.OneSignal) {
+    status.textContent = '❌ OneSignal не загрузился!';
+    status.className = 'status error';
+    console.error('OneSignal не найден');
     return;
   }
   
-  const permission = await Notification.requestPermission();
-  
-  if (permission === 'granted') {
-    status.innerHTML = '<div class="status success">✅ Готово! Теперь ты будешь получать уведомления!</div>';
+  try {
+    console.log('Запрашиваем разрешение...');
+    const permission = await OneSignal.Notifications.requestPermission(true);
+    console.log('Разрешение:', permission);
     
-    // Тестовое уведомление через 5 секунд
-    setTimeout(() => {
-      new Notification('Тест!', {
-        body: 'Если ты это видишь — всё работает! ❤️',
-        icon: 'https://telegram.org/img/t_logo.png'
-      });
-    }, 5000);
-  } else {
-    status.innerHTML = '<div class="status error">❌ Ты запретил уведомления</div>';
+    if (permission) {
+      const userId = await OneSignal.User.PushSubscription.id;
+      console.log('User ID:', userId);
+      status.textContent = '✅ Подписан! ID: ' + userId;
+      status.className = 'status success';
+    } else {
+      status.textContent = '❌ Разрешение не получено';
+      status.className = 'status error';
+    }
+  } catch (error) {
+    console.error('Ошибка:', error);
+    status.textContent = '❌ Ошибка: ' + error.message;
+    status.className = 'status error';
   }
 }
 </script>
-</body>
-</html>
+</body></html>
