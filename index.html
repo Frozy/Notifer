@@ -287,7 +287,8 @@ async function loadDevices() {
         const device = document.createElement('div');
         device.className = 'device-item';
         const date = player.properties && player.properties.last_active ? new Date(player.properties.last_active * 1000).toLocaleString('ru-RU') : 'Неизвестно';
-        const deviceType = player.device_type === 0 ? 'iOS' : player.device_type === 1 ? 'Android' : 'Web';
+        const deviceType = (player.properties && player.properties.device_type === 0) ? 'iOS' : 
+                   (player.properties && player.properties.device_type === 1) ? 'Android' : 'Web';
         
         device.innerHTML = `
           <input type="checkbox" class="device-checkbox" value="${player.id}" ${isEnabled ? 'checked' : ''}>
