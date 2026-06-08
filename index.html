@@ -1,111 +1,81 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Notifier</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
-  body { background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .container { max-width: 400px; text-align: center; }
-  .icon { width: 80px; height: 80px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; font-size: 40px; }
-  .title { font-size: 24px; font-weight: 600; margin-bottom: 12px; }
-  .text { color: #94a3b8; margin-bottom: 32px; line-height: 1.6; font-size: 15px; }
-  .btn { background: #8b5cf6; color: white; border: none; padding: 14px 40px; border-radius: 24px; font-size: 16px; font-weight: 500; cursor: pointer; width: 100%; margin-bottom: 12px; }
-  .btn:disabled { background: #475569; }
-  .status { margin-top: 16px; font-size: 14px; color: #94a3b8; min-height: 40px; }
-  .status.success { color: #34a853; }
-  .status.error { color: #ea4335; }
+body { 
+  background: #0f172a; 
+  color: white; 
+  min-height: 100vh; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+.container { text-align: center; max-width: 400px; }
+.icon { 
+  width: 80px; height: 80px; 
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9); 
+  border-radius: 20px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  margin: 0 auto 24px; 
+  font-size: 40px; 
+}
+.btn { 
+  background: #8b5cf6; 
+  color: white; 
+  border: none; 
+  padding: 14px 40px; 
+  border-radius: 24px; 
+  font-size: 16px; 
+  cursor: pointer; 
+  width: 100%; 
+  margin: 10px 0;
+}
+.status { margin-top: 20px; padding: 10px; border-radius: 8px; }
+.success { background: #22c55e; color: white; }
+.error { background: #ef4444; color: white; }
 </style>
-
-<!-- OneSignal SDK -->
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "fa17302b-89af-4bc5-9d84-1e86997e06c2",
-    });
-  });
-</script>
 </head>
 <body>
 <div class="container">
   <div class="icon">🔔</div>
-  <div class="title">Notifier</div>
-  <div class="text">Нажми кнопку чтобы получать уведомления каждые 10-30 минут</div>
-  <button class="btn" id="btnSubscribe" onclick="subscribe()">🔔 Подписаться на уведомления</button>
-  <div class="status" id="status"></div>
+  <h1>Notifier</h1>
+  <p style="color: #94a3b8; margin: 20px 0;">Нажми кнопку чтобы подписаться на уведомления</p>
+  <button class="btn" onclick="requestNotif()">🔔 Разрешить уведомления</button>
+  <div id="status"></div>
 </div>
 
 <script>
-async function subscribe() {
-  const btn = document.getElementById('btnSubscribe');
+async function requestNotif() {
   const status = document.getElementById('status');
   
-  // Ждём загрузки OneSignal
-  let attempts = 0;
-  while (!window.OneSignal && attempts < 20) {
-    await new Promise(r => setTimeout(r, 500));
-    attempts++;  }
-  
-  if (!window.OneSignal) {
-    status.textContent = '⚠️ OneSignal не загрузился. Проверь интернет и обнови страницу.';
-    status.className = 'status error';
+  if (!('Notification' in window)) {
+    status.innerHTML = '<div class="status error">❌ Уведомления не поддерживаются</div>';
     return;
   }
   
-  try {
-    // Проверяем уже ли подписан
-    const isSubscribed = await OneSignal.Notifications.permission === 'granted';
+  const permission = await Notification.requestPermission();
+  
+  if (permission === 'granted') {
+    status.innerHTML = '<div class="status success">✅ Готово! Теперь ты будешь получать уведомления!</div>';
     
-    if (isSubscribed) {
-      const userId = await OneSignal.User.PushSubscription.id;
-      status.textContent = '✅ Ты уже подписан! ID: ' + userId;
-      status.className = 'status success';
-      btn.disabled = true;
-      btn.textContent = '✅ Подписан';
-      return;
-    }
-    
-    // Запрашиваем разрешение
-    const permission = await OneSignal.Notifications.requestPermission(true);
-    
-    if (permission) {
-      const userId = await OneSignal.User.PushSubscription.id;
-      status.textContent = '✅ Готово! Теперь ты будешь получать уведомления. ID: ' + userId;
-      status.className = 'status success';
-      btn.disabled = true;
-      btn.textContent = '✅ Подписан';
-    } else {
-      status.textContent = '❌ Ты запретил уведомления. Разрешите в настройках браузера.';
-      status.className = 'status error';
-    }
-  } catch (error) {
-    status.textContent = '❌ Ошибка: ' + error.message;
-    status.className = 'status error';
+    // Тестовое уведомление через 5 секунд
+    setTimeout(() => {
+      new Notification('Тест!', {
+        body: 'Если ты это видишь — всё работает! ❤️',
+        icon: 'https://telegram.org/img/t_logo.png'
+      });
+    }, 5000);
+  } else {
+    status.innerHTML = '<div class="status error">❌ Ты запретил уведомления</div>';
   }
 }
-
-// Проверяем при загрузке страницы
-window.addEventListener('load', async function() {
-  let attempts = 0;
-  while (!window.OneSignal && attempts < 20) {
-    await new Promise(r => setTimeout(r, 500));
-    attempts++;
-  }
-  
-  if (window.OneSignal) {
-    const isSubscribed = await OneSignal.Notifications.permission === 'granted';    if (isSubscribed) {
-      const btn = document.getElementById('btnSubscribe');
-      const status = document.getElementById('status');
-      btn.disabled = true;
-      btn.textContent = '✅ Подписан';
-      status.textContent = '✅ Уведомления уже разрешены!';
-      status.className = 'status success';
-    }
-  }
-});
 </script>
 </body>
 </html>
