@@ -286,7 +286,7 @@ async function loadDevices() {
         
         const device = document.createElement('div');
         device.className = 'device-item';
-        const date = player.last_active ? new Date(player.last_active * 1000).toLocaleString('ru-RU') : 'Неизвестно';
+        const date = player.properties && player.properties.last_active ? new Date(player.properties.last_active * 1000).toLocaleString('ru-RU') : 'Неизвестно';
         const deviceType = player.device_type === 0 ? 'iOS' : player.device_type === 1 ? 'Android' : 'Web';
         
         device.innerHTML = `
