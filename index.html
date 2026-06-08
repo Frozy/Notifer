@@ -440,4 +440,13 @@ function showToast(msg) {
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
 </script>
+ <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "fa17302b-89af-4bc5-9d84-1e86997e06c2",
+    });
+  });
+</script>
 </body></html>
