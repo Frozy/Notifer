@@ -132,9 +132,33 @@ async function requestPermission() {
   const btn = document.getElementById('btnRequest');
   const status = document.getElementById('homeStatus');
   
+  // Ждём загрузки OneSignal (максимум 10 секунд)
+  let attempts = 0;
+  while (!window.OneSignal && attempts < 20) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    attempts++;
+  }
+  
   if (!window.OneSignal) {
-    status.textContent = '⏳ OneSignal загружается... Подождите 3 секунды и попробуйте снова.';
+    // Запасной вариант - обычный браузерный API
+    status.textContent = '⚠️ OneSignal не загрузился. Используем обычный API...';
     status.className = 'status-text error';
+    
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        status.textContent = '✅ Уведомления разрешены! (через браузерный API)';
+        status.className = 'status-text success';
+        btn.disabled = true;
+        btn.textContent = '✅ Разрешено';
+      } else {
+        status.textContent = '❌ Разрешение не получено';
+        status.className = 'status-text error';
+      }
+    } else {
+      status.textContent = ' Уведомления не поддерживаются';
+      status.className = 'status-text error';
+    }
     return;
   }
   
@@ -145,13 +169,14 @@ async function requestPermission() {
       const userId = await OneSignal.User.PushSubscription.id;
       status.textContent = '✅ Уведомления разрешены! ID: ' + userId;
       status.className = 'status-text success';
-      btn.disabled = true;      btn.textContent = '✅ Разрешено';
+      btn.disabled = true;
+      btn.textContent = '✅ Разрешено';
     } else {
       status.textContent = '❌ Разрешение не получено';
       status.className = 'status-text error';
     }
   } catch (error) {
-    status.textContent = '❌ Ошибка: ' + error.message;
+    status.textContent = ' Ошибка: ' + error.message;
     status.className = 'status-text error';
   }
 }
