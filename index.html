@@ -111,16 +111,29 @@
 <div class="toast" id="toast"></div>
 
 <!-- OneSignal SDK -->
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "fa17302b-89af-4bc5-9d84-1e86997e06c2",
-    });
-  });
+  // Загружаем OneSignal SDK
+  (function() {
+    var script = document.createElement('script');
+    script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+    script.async = true;
+    script.onload = function() {
+      console.log('OneSignal SDK загружен!');
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "fa17302b-89af-4bc5-9d84-1e86997e06c2",
+        });
+        console.log('OneSignal инициализирован!');
+      });
+    };
+    script.onerror = function() {
+      console.error('OneSignal SDK не загрузился!');
+    };
+    document.head.appendChild(script);
+  })();
 </script>
-
+ 
 <script>
 const APP_ID = 'fa17302b-89af-4bc5-9d84-1e86997e06c2';
 const API_BASE = 'https://patient-sun-6f07.ytdanil72.workers.dev';
