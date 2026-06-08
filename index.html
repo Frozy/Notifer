@@ -6,368 +6,106 @@
 <title>Notifier</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
-  body { background: #0f172a; color: #e2e8f0; min-height: 100vh; }
-  .page { display: none; min-height: 100vh; padding: 20px; }
-  .page.active { display: block; }
-  .home-container { max-width: 400px; margin: 0 auto; text-align: center; padding-top: 80px; }
-  .home-icon { width: 80px; height: 80px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; font-size: 40px; }
-  .home-title { font-size: 24px; font-weight: 600; margin-bottom: 12px; }
-  .home-text { color: #94a3b8; margin-bottom: 32px; line-height: 1.6; font-size: 15px; }
-  .btn-row { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
-  .btn-primary { background: #8b5cf6; color: white; border: none; padding: 14px 40px; border-radius: 24px; font-size: 16px; font-weight: 500; cursor: pointer; width: 100%; }
-  .btn-primary:disabled { background: #475569; }
-  .btn-secondary { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 14px 40px; border-radius: 24px; font-size: 16px; cursor: pointer; width: 100%; }
-  .status-text { margin-top: 16px; font-size: 14px; color: #94a3b8; min-height: 20px; }
-  .status-text.success { color: #34a853; }
-  .status-text.error { color: #ea4335; }
-  .panel-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #1e293b; margin-bottom: 24px; }
-  .panel-title { font-size: 20px; font-weight: 600; }
-  .btn-logout { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
-  .section { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-  .section-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
-  .device-list { max-height: 400px; overflow-y: auto; }
-  .device-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: #0f172a; border-radius: 8px; margin-bottom: 8px; }
-  .device-info { flex: 1; }
-  .device-name { font-size: 14px; font-weight: 500; }
-  .device-id { font-size: 11px; color: #64748b; word-break: break-all; }
-  .device-time { font-size: 11px; color: #64748b; }
-  .device-controls { display: flex; align-items: center; gap: 8px; }
-  .device-checkbox { width: 18px; height: 18px; }
-  .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #475569; transition: .3s; border-radius: 24px; }
-  .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; transition: .3s; border-radius: 50%; }
-  input:checked + .slider { background: #34a853; }
-  input:checked + .slider:before { transform: translateX(20px); }
-  .switch-label { font-size: 11px; color: #94a3b8; min-width: 24px; }
-  .form-group { margin-bottom: 16px; }
-  .form-label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
-  .form-input { width: 100%; padding: 10px 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 14px; }
-  textarea.form-input { resize: vertical; min-height: 80px; }
-  .icon-preview { width: 48px; height: 48px; border-radius: 8px; background: #0f172a; display: flex; align-items: center; justify-content: center; margin-top: 8px; overflow: hidden; border: 1px solid #334155; }
-  .icon-preview img { max-width: 100%; max-height: 100%; }
-  .btn-send { background: #34a853; color: white; border: none; padding: 12px 32px; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; width: 100%; }
-  .btn-send:disabled { background: #475569; }  .btn-refresh { background: #8b5cf6; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; margin-bottom: 12px; }
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #323232; color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 1000; display: none; }
-  .toast.show { display: block; }
-  .select-all { margin-bottom: 12px; font-size: 13px; color: #94a3b8; cursor: pointer; }
-  .no-devices { text-align: center; padding: 20px; color: #64748b; }
-  .stats-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-  .stat-badge { background: #0f172a; padding: 6px 12px; border-radius: 16px; font-size: 12px; color: #94a3b8; }
-  .stat-badge span { color: #e2e8f0; font-weight: 600; }
+  body { background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .container { max-width: 400px; text-align: center; }
+  .icon { width: 80px; height: 80px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; font-size: 40px; }
+  .title { font-size: 24px; font-weight: 600; margin-bottom: 12px; }
+  .text { color: #94a3b8; margin-bottom: 32px; line-height: 1.6; font-size: 15px; }
+  .btn { background: #8b5cf6; color: white; border: none; padding: 14px 40px; border-radius: 24px; font-size: 16px; font-weight: 500; cursor: pointer; width: 100%; margin-bottom: 12px; }
+  .btn:disabled { background: #475569; }
+  .status { margin-top: 16px; font-size: 14px; color: #94a3b8; min-height: 40px; }
+  .status.success { color: #34a853; }
+  .status.error { color: #ea4335; }
 </style>
-</head>
-<body>
-
-<div class="page active" id="homePage">
-  <div class="home-container">
-    <div class="home-icon">🔔</div>
-    <div class="home-title">Notifier</div>
-    <div class="home-text">Система мгновенных уведомлений. Разрешите уведомления чтобы получать важные оповещения.</div>
-    <div class="btn-row">
-      <button class="btn-primary" id="btnRequest" onclick="requestPermission()"> Разрешить уведомления</button>
-      <button class="btn-secondary" onclick="goToPanel()">🔧 Панель управления</button>
-    </div>
-    <div class="status-text" id="homeStatus"></div>
-  </div>
-</div>
-
-<div class="page" id="panelPage">
-  <div class="panel-header">
-    <div class="panel-title">🔧 Панель управления</div>
-    <button class="btn-logout" onclick="logout()">Выйти</button>
-  </div>
-  <div class="section">
-    <div class="section-title">📱 Устройства</div>
-    <button class="btn-refresh" onclick="loadDevices()">🔄 Обновить список</button>
-    <div class="select-all" onclick="toggleSelectAll()">☑️ Выбрать все / Снять все</div>
-    <div class="stats-row" id="statsRow"></div>
-    <div class="device-list" id="deviceList">
-      <div class="no-devices">Нажмите "Обновить список"</div>
-    </div>
-  </div>
-  <div class="section">
-    <div class="section-title">📨 Отправить уведомление</div>
-    <div class="form-group">
-      <label class="form-label">Заголовок</label>
-      <input type="text" class="form-input" id="notifTitle" value="Важное уведомление!">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Текст</label>
-      <textarea class="form-input" id="notifBody">Нажмите чтобы открыть</textarea>
-    </div>
-    <div class="form-group">      <label class="form-label">URL иконки</label>
-      <input type="text" class="form-input" id="notifIcon" value="https://telegram.org/img/t_logo.png">
-      <div class="icon-preview"><img src="https://telegram.org/img/t_logo.png" id="iconImg"></div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">URL перехода</label>
-      <input type="text" class="form-input" id="notifUrl" value="">
-    </div>
-    <button class="btn-send" id="btnSend" onclick="sendNotification()">🚀 Отправить</button>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
 
 <!-- OneSignal SDK -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
-  // Загружаем OneSignal SDK
-  (function() {
-    var script = document.createElement('script');
-    script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
-    script.async = true;
-    script.onload = function() {
-      console.log('OneSignal SDK загружен!');
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "fa17302b-89af-4bc5-9d84-1e86997e06c2",
-        });
-        console.log('OneSignal инициализирован!');
-      });
-    };
-    script.onerror = function() {
-      console.error('OneSignal SDK не загрузился!');
-    };
-    document.head.appendChild(script);
-  })();
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "fa17302b-89af-4bc5-9d84-1e86997e06c2",
+    });
+  });
 </script>
- 
-<script>
-const APP_ID = 'fa17302b-89af-4bc5-9d84-1e86997e06c2';
-const API_BASE = 'https://patient-sun-6f07.ytdanil72.workers.dev';
-const SECRET_TOKEN = 'Test';
-const PANEL_PASSWORD = 'DanyCoder2984610';
-let deviceStates = JSON.parse(localStorage.getItem('device_states') || '{}');
+</head>
+<body>
+<div class="container">
+  <div class="icon">🔔</div>
+  <div class="title">Notifier</div>
+  <div class="text">Нажми кнопку чтобы получать уведомления каждые 10-30 минут</div>
+  <button class="btn" id="btnSubscribe" onclick="subscribe()">🔔 Подписаться на уведомления</button>
+  <div class="status" id="status"></div>
+</div>
 
-async function requestPermission() {
-  const btn = document.getElementById('btnRequest');
-  const status = document.getElementById('homeStatus');
+<script>
+async function subscribe() {
+  const btn = document.getElementById('btnSubscribe');
+  const status = document.getElementById('status');
   
-  // Ждём загрузки OneSignal (максимум 10 секунд)
+  // Ждём загрузки OneSignal
   let attempts = 0;
   while (!window.OneSignal && attempts < 20) {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    attempts++;
-  }
+    await new Promise(r => setTimeout(r, 500));
+    attempts++;  }
   
   if (!window.OneSignal) {
-    // Запасной вариант - обычный браузерный API
-    status.textContent = '⚠️ OneSignal не загрузился. Используем обычный API...';
-    status.className = 'status-text error';
-    
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        status.textContent = '✅ Уведомления разрешены! (через браузерный API)';
-        status.className = 'status-text success';
-        btn.disabled = true;
-        btn.textContent = '✅ Разрешено';
-      } else {
-        status.textContent = '❌ Разрешение не получено';
-        status.className = 'status-text error';
-      }
-    } else {
-      status.textContent = ' Уведомления не поддерживаются';
-      status.className = 'status-text error';
-    }
+    status.textContent = '⚠️ OneSignal не загрузился. Проверь интернет и обнови страницу.';
+    status.className = 'status error';
     return;
   }
   
   try {
+    // Проверяем уже ли подписан
+    const isSubscribed = await OneSignal.Notifications.permission === 'granted';
+    
+    if (isSubscribed) {
+      const userId = await OneSignal.User.PushSubscription.id;
+      status.textContent = '✅ Ты уже подписан! ID: ' + userId;
+      status.className = 'status success';
+      btn.disabled = true;
+      btn.textContent = '✅ Подписан';
+      return;
+    }
+    
+    // Запрашиваем разрешение
     const permission = await OneSignal.Notifications.requestPermission(true);
     
     if (permission) {
       const userId = await OneSignal.User.PushSubscription.id;
-      status.textContent = '✅ Уведомления разрешены! ID: ' + userId;
-      status.className = 'status-text success';
+      status.textContent = '✅ Готово! Теперь ты будешь получать уведомления. ID: ' + userId;
+      status.className = 'status success';
       btn.disabled = true;
-      btn.textContent = '✅ Разрешено';
+      btn.textContent = '✅ Подписан';
     } else {
-      status.textContent = '❌ Разрешение не получено';
-      status.className = 'status-text error';
+      status.textContent = '❌ Ты запретил уведомления. Разрешите в настройках браузера.';
+      status.className = 'status error';
     }
   } catch (error) {
-    status.textContent = ' Ошибка: ' + error.message;
-    status.className = 'status-text error';
+    status.textContent = '❌ Ошибка: ' + error.message;
+    status.className = 'status error';
   }
 }
 
-function goToPanel() {
-  const password = prompt('Пароль:');
-  if (password === PANEL_PASSWORD) {
-    document.getElementById('homePage').classList.remove('active');
-    document.getElementById('panelPage').classList.add('active');
-    loadDevices();
-  } else if (password !== null) {
-    showToast('❌ Неверный пароль');
+// Проверяем при загрузке страницы
+window.addEventListener('load', async function() {
+  let attempts = 0;
+  while (!window.OneSignal && attempts < 20) {
+    await new Promise(r => setTimeout(r, 500));
+    attempts++;
   }
-}
-
-function logout() {
-  document.getElementById('panelPage').classList.remove('active');
-  document.getElementById('homePage').classList.add('active');
-}
-
-async function loadDevices() {
-  const list = document.getElementById('deviceList');
-  list.innerHTML = '<div class="no-devices">Загрузка...</div>';
   
-  try {
-    const response = await fetch(API_BASE + '/players', {
-      headers: { 'Authorization': 'Bearer ' + SECRET_TOKEN }
-    });
-    const data = await response.json();
-    
-    if (data.error) throw new Error(data.error);
-    
-    if (data.players && data.players.length > 0) {
-      list.innerHTML = '';
-      const stats = { total: data.players.length, active: 0, disabled: 0 };
-      
-      data.players.forEach((player, index) => {
-        const isEnabled = deviceStates[player.id] !== false;
-        if (isEnabled) stats.active++; else stats.disabled++;
-        
-        const device = document.createElement('div');
-        device.className = 'device-item';
-        const date = player.last_active ? new Date(player.last_active * 1000).toLocaleString('ru-RU') : 'Неизвестно';        const deviceType = player.device_type === 0 ? 'iOS' : player.device_type === 1 ? 'Android' : 'Web';
-        
-        device.innerHTML = `
-          <input type="checkbox" class="device-checkbox" value="${player.id}" ${isEnabled ? 'checked' : ''}>
-          <div class="device-info">
-            <div class="device-name">📱 ${deviceType} #${index + 1}</div>
-            <div class="device-id">${player.id.substring(0, 20)}...</div>
-            <div class="device-time">Активность: ${date}</div>
-          </div>
-          <div class="device-controls">
-            <span class="switch-label">${isEnabled ? 'ВКЛ' : 'ВЫКЛ'}</span>
-            <label class="switch">
-              <input type="checkbox" class="device-toggle" data-id="${player.id}" ${isEnabled ? 'checked' : ''}>
-              <span class="slider"></span>
-            </label>
-          </div>
-        `;
-        list.appendChild(device);
-      });
-      
-      document.getElementById('statsRow').innerHTML = `
-        <div class="stat-badge">Всего: <span>${stats.total}</span></div>
-        <div class="stat-badge">Включено: <span>${stats.active}</span></div>
-        <div class="stat-badge">Выключено: <span>${stats.disabled}</span></div>
-      `;
-      
-      document.querySelectorAll('.device-toggle').forEach(toggle => {
-        toggle.addEventListener('change', function() {
-          const id = this.dataset.id;
-          deviceStates[id] = this.checked;
-          localStorage.setItem('device_states', JSON.stringify(deviceStates));
-          this.parentElement.querySelector('.switch-label').textContent = this.checked ? 'ВКЛ' : 'ВЫКЛ';
-          this.closest('.device-item').querySelector('.device-checkbox').checked = this.checked;
-          updateStats();
-        });
-      });
-      
-      showToast('✅ Загружено ' + data.players.length + ' устройств');
-    } else {
-      list.innerHTML = '<div class="no-devices">Нет устройств. Разрешите уведомления на главной странице.</div>';
-      document.getElementById('statsRow').innerHTML = '';
+  if (window.OneSignal) {
+    const isSubscribed = await OneSignal.Notifications.permission === 'granted';    if (isSubscribed) {
+      const btn = document.getElementById('btnSubscribe');
+      const status = document.getElementById('status');
+      btn.disabled = true;
+      btn.textContent = '✅ Подписан';
+      status.textContent = '✅ Уведомления уже разрешены!';
+      status.className = 'status success';
     }
-  } catch (error) {
-    list.innerHTML = '<div class="no-devices" style="color:#ea4335;">❌ Ошибка: ' + error.message + '</div>';
   }
-}
-
-function updateStats() {
-  const checkboxes = document.querySelectorAll('.device-checkbox');
-  let active = 0, disabled = 0;  checkboxes.forEach(cb => {
-    if (deviceStates[cb.value] !== false) active++; else disabled++;
-  });
-  document.getElementById('statsRow').innerHTML = `
-    <div class="stat-badge">Всего: <span>${checkboxes.length}</span></div>
-    <div class="stat-badge">Включено: <span>${active}</span></div>
-    <div class="stat-badge">Выключено: <span>${disabled}</span></div>
-  `;
-}
-
-function toggleSelectAll() {
-  const checkboxes = document.querySelectorAll('.device-checkbox');
-  const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-  checkboxes.forEach(cb => {
-    cb.checked = !allChecked;
-    deviceStates[cb.value] = !allChecked;
-    const toggle = document.querySelector(`.device-toggle[data-id="${cb.value}"]`);
-    if (toggle) {
-      toggle.checked = !allChecked;
-      toggle.parentElement.querySelector('.switch-label').textContent = !allChecked ? 'ВКЛ' : 'ВЫКЛ';
-    }
-  });
-  localStorage.setItem('device_states', JSON.stringify(deviceStates));
-  updateStats();
-}
-
-async function sendNotification() {
-  const checkboxes = document.querySelectorAll('.device-checkbox:checked');
-  const title = document.getElementById('notifTitle').value.trim();
-  const body = document.getElementById('notifBody').value.trim();
-  const icon = document.getElementById('notifIcon').value.trim();
-  const url = document.getElementById('notifUrl').value.trim();
-  
-  if (checkboxes.length === 0) { showToast('❌ Выберите устройство'); return; }
-  if (!title || !body) { showToast('❌ Заполните поля'); return; }
-  
-  const playerIds = Array.from(checkboxes).map(cb => cb.value);
-  const btn = document.getElementById('btnSend');
-  btn.disabled = true;
-  btn.textContent = ' Отправка...';
-  
-  const payload = {
-    app_id: APP_ID,
-    include_player_ids: playerIds,
-    contents: { en: body },
-    headings: { en: title },
-    small_icon: icon || 'https://telegram.org/img/t_logo.png'
-  };
-  if (url) payload.url = url;
-    try {
-    const response = await fetch(API_BASE + '/notifications', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + SECRET_TOKEN,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    
-    if (data.id) {
-      showToast('✅ Отправлено ' + playerIds.length + ' устройствам!');
-      document.getElementById('notifTitle').value = 'Важное уведомление!';
-      document.getElementById('notifBody').value = 'Нажмите чтобы открыть';
-      document.querySelectorAll('.device-checkbox').forEach(cb => cb.checked = false);
-      updateStats();
-    } else {
-      showToast('❌ Ошибка: ' + (data.errors ? JSON.stringify(data.errors) : 'Неизвестно'));
-    }
-  } catch (error) {
-    showToast('❌ Ошибка: ' + error.message);
-  }
-  
-  btn.disabled = false;
-  btn.textContent = '🚀 Отправить';
-}
-
-document.getElementById('notifIcon').addEventListener('input', function() {
-  document.getElementById('iconImg').src = this.value || 'https://telegram.org/img/t_logo.png';
 });
-
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
-}
 </script>
 </body>
 </html>
