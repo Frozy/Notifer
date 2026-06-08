@@ -2,98 +2,92 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Notifier</title>
+<title>Добавить устройство</title>
 <style>
-body { 
-  background: #0f172a; 
-  color: white; 
-  min-height: 100vh; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  font-family: Arial, sans-serif;
-  padding: 20px;
-}
+body { background: #0f172a; color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: Arial; padding: 20px; }
 .container { text-align: center; max-width: 400px; }
-.btn { 
-  background: #8b5cf6; 
-  color: white; 
-  border: none; 
-  padding: 14px 40px; 
-  border-radius: 24px; 
-  font-size: 16px; 
-  cursor: pointer; 
-  width: 100%; 
-  margin: 10px 0;
-}
-.status { 
-  margin-top: 20px; 
-  padding: 10px; 
-  border-radius: 8px; 
-  font-size: 14px;
-}
-.success { background: #22c55e; color: white; }
-.error { background: #ef4444; color: white; }
-.info { background: #3b82f6; color: white; }
+.btn { background: #8b5cf6; color: white; border: none; padding: 14px 40px; border-radius: 24px; font-size: 16px; cursor: pointer; width: 100%; margin: 10px 0; }
+.status { margin-top: 20px; padding: 10px; border-radius: 8px; font-size: 14px; }
+.success { background: #22c55e; }
+.error { background: #ef4444; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🔔 Notifier</h1>
-  <p style="color: #94a3b8; margin: 20px 0;">Нажми кнопку чтобы подписаться</p>
-  <button class="btn" onclick="subscribe()">🔔 Подписаться</button>
-  <div id="status" class="info">Загрузка OneSignal...</div>
+  <h1>🔔 Добавить устройство</h1>
+  <button class="btn" onclick="registerDevice()">Зарегистрировать устройство</button>
+  <div id="status" class="status"></div>
 </div>
 
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>console.log('Скрипт загружен');
+<script>
+const APP_ID = 'fa17302b-89af-4bc5-9d84-1e86997e06c2';
+const REST_API_KEY = 'ВСТАВЬ_СЮДА_REST_API_KEY';
 
-window.OneSignalDeferred = window.OneSignalDeferred || [];
-OneSignalDeferred.push(async function(OneSignal) {
-  console.log('OneSignal загружен!', OneSignal);
-  
-  await OneSignal.init({
-    appId: "fa17302b-89af-4bc5-9d84-1e86997e06c2",
-  });
-  
-  console.log('OneSignal инициализирован!');
-  
+async function registerDevice() {
   const status = document.getElementById('status');
-  status.textContent = '✅ OneSignal готов! Нажми кнопку.';
-  status.className = 'status info';
-});
-
-async function subscribe() {
-  const status = document.getElementById('status');
-  console.log('Нажата кнопка подписки');
-  
-  if (!window.OneSignal) {
-    status.textContent = '❌ OneSignal не загрузился!';
-    status.className = 'status error';
-    console.error('OneSignal не найден');
-    return;
-  }
   
   try {
-    console.log('Запрашиваем разрешение...');
-    const permission = await OneSignal.Notifications.requestPermission(true);
-    console.log('Разрешение:', permission);
-    
-    if (permission) {
-      const userId = await OneSignal.User.PushSubscription.id;
-      console.log('User ID:', userId);
-      status.textContent = '✅ Подписан! ID: ' + userId;
-      status.className = 'status success';
-    } else {
+    // 1. Запрашиваем разрешение
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
       status.textContent = '❌ Разрешение не получено';
       status.className = 'status error';
+      return;
     }
+    
+    // 2. Регистрируем Service Worker
+    const registration = await navigator.serviceWorker.register('/OneSignalSDKWorker.js');
+    
+    // 3. Получаем подписку
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U'
+    });
+    
+    // 4. Получаем ключи
+    const key = subscription.getKey('p256dh');
+    const auth = subscription.getKey('auth');
+    
+    const p256dh = key ? btoa(String.fromCharCode.apply(null, new Uint8Array(key))) : '';
+    const authKey = auth ? btoa(String.fromCharCode.apply(null, new Uint8Array(auth))) : '';
+    
+    // 5. Отправляем в OneSignal
+    const response = await fetch(`https://onesignal.com/api/v1/players`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Basic ' + REST_API_KEY
+      },
+      body: JSON.stringify({
+        app_id: APP_ID,
+        device_type: 5, // Chrome
+        identifier: subscription.endpoint,
+        language: 'ru',
+        timezone: 10800,
+        game_version: '1.0',
+        device_os: 'Chrome',
+        tags: {},
+        test_type: 1
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.id) {
+      status.textContent = '✅ Устройство добавлено! ID: ' + data.id;
+      status.className = 'status success';
+      console.log('Device ID:', data.id);
+    } else {
+      status.textContent = '❌ Ошибка: ' + JSON.stringify(data);
+      status.className = 'status error';
+    }
+    
   } catch (error) {
-    console.error('Ошибка:', error);
     status.textContent = '❌ Ошибка: ' + error.message;
     status.className = 'status error';
+    console.error(error);
   }
 }
 </script>
-</body></html>
+</body>
+</html>
