@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifier - Система уведомлений</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+  body { background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+  
+  .page { display: none; min-height: 100vh; padding: 20px; }
+  .page.active { display: block; }
+  
+  .home-container { max-width: 400px; margin: 0 auto; text-align: center; padding-top: 80px; }
+  .home-icon {
+    width: 80px; height: 80px; background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    border-radius: 20px; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px; font-size: 40px;
+  }
+  .home-title { font-size: 24px; font-weight: 600; margin-bottom: 12px; }
+  .home-text { color: #94a3b8; margin-bottom: 32px; line-height: 1.6; font-size: 15px; }
+  
+  .btn-row { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  .btn-primary {
+    background: #8b5cf6; color: white; border: none; padding: 14px 40px;
+    border-radius: 24px; font-size: 16px; font-weight: 500; cursor: pointer;
+    transition: background 0.2s; width: 100%;
+  }
+  .btn-primary:hover { background: #7c3aed; }
+  .btn-primary:disabled { background: #475569; cursor: not-allowed; }
+  .btn-secondary {
+    background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 14px 40px;
+    border-radius: 24px; font-size: 16px; font-weight: 500; cursor: pointer;
+    transition: all 0.2s; width: 100%;
+  }
+  .btn-secondary:hover { background: #334155; }
+  
+  .status-text { margin-top: 16px; font-size: 14px; color: #94a3b8; min-height: 20px; }
+  .status-text.success { color: #34a853; }
+  .status-text.error { color: #ea4335; }
+  
+  .panel-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 0; border-bottom: 1px solid #1e293b; margin-bottom: 24px;
+  }
+  .panel-title { font-size: 20px; font-weight: 600; }
+  .btn-logout {
+    background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 8px 16px;
+    border-radius: 8px; cursor: pointer; font-size: 14px;
+  }  .btn-logout:hover { background: #334155; }
+  
+  .section { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .section-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  
+  .device-list { max-height: 400px; overflow-y: auto; }
+  .device-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px;
+    background: #0f172a; border-radius: 8px; margin-bottom: 8px;
+  }
+  .device-info { flex: 1; min-width: 0; }
+  .device-name { font-size: 14px; font-weight: 500; }
+  .device-id { font-size: 11px; color: #64748b; word-break: break-all; }
+  .device-time { font-size: 11px; color: #64748b; margin-top: 2px; }
+  
+  .device-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .device-checkbox { width: 18px; height: 18px; cursor: pointer; }
+  
+  .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background: #475569; transition: .3s; border-radius: 24px;
+  }
+  .slider:before {
+    position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+    background: white; transition: .3s; border-radius: 50%;
+  }
+  input:checked + .slider { background: #34a853; }
+  input:checked + .slider:before { transform: translateX(20px); }
+  .switch-label { font-size: 11px; color: #94a3b8; min-width: 24px; }
+  
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
+  .form-input {
+    width: 100%; padding: 10px 12px; background: #0f172a; border: 1px solid #334155;
+    border-radius: 8px; color: #e2e8f0; font-size: 14px;
+  }
+  .form-input:focus { outline: none; border-color: #8b5cf6; }
+  textarea.form-input { resize: vertical; min-height: 80px; }
+  
+  .icon-preview {
+    width: 48px; height: 48px; border-radius: 8px; background: #0f172a;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 8px; overflow: hidden; border: 1px solid #334155;
+  }
+  .icon-preview img { max-width: 100%; max-height: 100%; }
+  
+  .btn-send {
+    background: #34a853; color: white; border: none; padding: 12px 32px;    border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer;
+    width: 100%; transition: background 0.2s;
+  }
+  .btn-send:hover { background: #2d8f47; }
+  .btn-send:disabled { background: #475569; cursor: not-allowed; }
+  
+  .btn-refresh {
+    background: #8b5cf6; color: white; border: none; padding: 8px 16px;
+    border-radius: 8px; cursor: pointer; font-size: 13px; margin-bottom: 12px;
+  }
+  .btn-refresh:hover { background: #7c3aed; }
+  
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #323232; color: white; padding: 12px 24px; border-radius: 8px;
+    font-size: 14px; z-index: 1000; display: none; white-space: nowrap;
+  }
+  .toast.show { display: block; }
+  
+  .select-all { margin-bottom: 12px; font-size: 13px; color: #94a3b8; cursor: pointer; }
+  .select-all:hover { color: #e2e8f0; }
+  .no-devices { text-align: center; padding: 20px; color: #64748b; }
+  
+  .stats-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat-badge {
+    background: #0f172a; padding: 6px 12px; border-radius: 16px;
+    font-size: 12px; color: #94a3b8;
+  }
+  .stat-badge span { color: #e2e8f0; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- Главная страница -->
+<div class="page active" id="homePage">
+  <div class="home-container">
+    <div class="home-icon">🔔</div>
+    <div class="home-title">Notifier</div>
+    <div class="home-text">
+      Система мгновенных уведомлений. Разрешите уведомления чтобы получать важные оповещения.
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="btnRequest" onclick="requestPermission()">
+        🔔 Разрешить уведомления
+      </button>
+      <button class="btn-secondary" onclick="goToPanel()">
+        🔧 Панель управления
+      </button>
+    </div>
+    <div class="status-text" id="homeStatus"></div>  </div>
+</div>
+
+<!-- Панель управления -->
+<div class="page" id="panelPage">
+  <div class="panel-header">
+    <div class="panel-title">🔧 Панель управления</div>
+    <button class="btn-logout" onclick="logout()">Выйти</button>
+  </div>
+  
+  <div class="section">
+    <div class="section-title">📱 Устройства</div>
+    <button class="btn-refresh" onclick="loadDevices()">🔄 Обновить список</button>
+    <div class="select-all" onclick="toggleSelectAll()">☑️ Выбрать все / Снять все</div>
+    <div class="stats-row" id="statsRow"></div>
+    <div class="device-list" id="deviceList">
+      <div class="no-devices">Нажмите "Обновить список" для загрузки устройств</div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <div class="section-title">📨 Отправить уведомление</div>
+    
+    <div class="form-group">
+      <label class="form-label">Заголовок</label>
+      <input type="text" class="form-input" id="notifTitle" placeholder="Важное уведомление!" value="Важное уведомление!">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">Текст уведомления</label>
+      <textarea class="form-input" id="notifBody" placeholder="Введите текст уведомления...">Нажмите чтобы открыть</textarea>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">URL иконки</label>
+      <input type="text" class="form-input" id="notifIcon" placeholder="https://example.com/icon.png">
+      <div class="icon-preview">
+        <img src="https://via.placeholder.com/48" id="iconImg">
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">URL перехода (при нажатии на уведомление)</label>
+      <input type="text" class="form-input" id="notifUrl" placeholder="https://example.com">
+    </div>
+    
+    <button class="btn-send" id="btnSend" onclick="sendNotification()">
+      🚀 Отправить выбранным устройствам
+    </button>
+  </div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== НАСТРОЙКИ =====
+const APP_ID = 'fa17302b-89af-4bc5-9d84-1e86997e06c2';
+const API_BASE = 'https://patient-sun-6f07.ytdanil72.workers.dev'; // ← ВСТАВЬ СЮДА URL ТВОЕГО WORKER
+const SECRET_TOKEN = 'DanyCodar274848282726'; // ← ТОТ ЖЕ ТОКЕН ЧТО В WORKER
+const PANEL_PASSWORD = 'DanyCoder2984610';
+
+// Состояние устройств
+let deviceStates = JSON.parse(localStorage.getItem('device_states') || '{}');
+
+// ===== ГЛАВНАЯ СТРАНИЦА =====
+function requestPermission() {
+  const btn = document.getElementById('btnRequest');
+  const status = document.getElementById('homeStatus');
+  
+  if (!('Notification' in window)) {
+    status.textContent = '❌ Уведомления не поддерживаются в этом браузере';
+    status.className = 'status-text error';
+    return;
+  }
+  
+  if (Notification.permission === 'granted') {
+    status.textContent = '✅ Уведомления уже разрешены!';
+    status.className = 'status-text success';
+    btn.disabled = true;
+    btn.textContent = '✅ Разрешено';
+    return;
+  }
+  
+  if (Notification.permission === 'denied') {
+    status.textContent = '❌ Уведомления заблокированы. Разрешите в настройках браузера.';
+    status.className = 'status-text error';
+    return;
+  }
+  
+  Notification.requestPermission().then(permission => {
+    if (permission === 'granted') {
+      status.textContent = '✅ Уведомления разрешены! Теперь вы будете получать уведомления.';
+      status.className = 'status-text success';
+      btn.disabled = true;
+      btn.textContent = '✅ Разрешено';
+    } else {
+      status.textContent = '❌ Разрешение не получено';
+      status.className = 'status-text error';
+    }
+  });}
+
+function goToPanel() {
+  const password = prompt('Введите пароль для доступа к панели:');
+  if (password === PANEL_PASSWORD) {
+    document.getElementById('homePage').classList.remove('active');
+    document.getElementById('panelPage').classList.add('active');
+    loadDevices();
+  } else if (password !== null) {
+    showToast('❌ Неверный пароль');
+  }
+}
+
+function logout() {
+  document.getElementById('panelPage').classList.remove('active');
+  document.getElementById('homePage').classList.add('active');
+}
+
+// ===== ПАНЕЛЬ =====
+async function loadDevices() {
+  const list = document.getElementById('deviceList');
+  list.innerHTML = '<div class="no-devices">Загрузка...</div>';
+  
+  try {
+    const response = await fetch(`${API_BASE}/players`, {
+      headers: { 'Authorization': `Bearer ${SECRET_TOKEN}` }
+    });
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    
+    if (data.players && data.players.length > 0) {
+      list.innerHTML = '';
+      const stats = { total: data.players.length, active: 0, disabled: 0 };
+      
+      data.players.forEach((player, index) => {
+        const isEnabled = deviceStates[player.id] !== false;
+        if (isEnabled) stats.active++; else stats.disabled++;
+        
+        const device = document.createElement('div');
+        device.className = 'device-item';
+        const date = player.last_active ? new Date(player.last_active * 1000).toLocaleString('ru-RU') : 'Неизвестно';
+        const deviceType = player.device_type === 0 ? 'iOS' : player.device_type === 1 ? 'Android' : 'Web';
+        
+        device.innerHTML = `
+          <input type="checkbox" class="device-checkbox" value="${player.id}" ${isEnabled ? 'checked' : ''}>
+          <div class="device-info">
+            <div class="device-name">📱 ${deviceType} #${index + 1}</div>            <div class="device-id">${player.id.substring(0, 20)}...</div>
+            <div class="device-time">Активность: ${date}</div>
+          </div>
+          <div class="device-controls">
+            <span class="switch-label">${isEnabled ? 'ВКЛ' : 'ВЫКЛ'}</span>
+            <label class="switch">
+              <input type="checkbox" class="device-toggle" data-id="${player.id}" ${isEnabled ? 'checked' : ''}>
+              <span class="slider"></span>
+            </label>
+          </div>
+        `;
+        list.appendChild(device);
+      });
+      
+      document.getElementById('statsRow').innerHTML = `
+        <div class="stat-badge">Всего: <span>${stats.total}</span></div>
+        <div class="stat-badge">Включено: <span>${stats.active}</span></div>
+        <div class="stat-badge">Выключено: <span>${stats.disabled}</span></div>
+      `;
+      
+      // Обработчики переключателей
+      document.querySelectorAll('.device-toggle').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+          const id = this.dataset.id;
+          deviceStates[id] = this.checked;
+          localStorage.setItem('device_states', JSON.stringify(deviceStates));
+          this.parentElement.querySelector('.switch-label').textContent = this.checked ? 'ВКЛ' : 'ВЫКЛ';
+          const checkbox = this.closest('.device-item').querySelector('.device-checkbox');
+          checkbox.checked = this.checked;
+          updateStats();
+          showToast(this.checked ? '✅ Устройство включено' : '⏸️ Устройство выключено');
+        });
+      });
+      
+      showToast(`✅ Загружено ${data.players.length} устройств`);
+    } else {
+      list.innerHTML = '<div class="no-devices">Нет устройств. Пользователь ещё не разрешил уведомления.</div>';
+      document.getElementById('statsRow').innerHTML = '';
+    }
+  } catch (error) {
+    list.innerHTML = `<div class="no-devices" style="color:#ea4335;">❌ Ошибка: ${error.message}</div>`;
+  }
+}
+
+function updateStats() {
+  const checkboxes = document.querySelectorAll('.device-checkbox');
+  let active = 0, disabled = 0;
+  checkboxes.forEach(cb => {
+    const id = cb.value;
+    if (deviceStates[id] !== false) active++; else disabled++;  });
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-badge">Всего: <span>${checkboxes.length}</span></div>
+    <div class="stat-badge">Включено: <span>${active}</span></div>
+    <div class="stat-badge">Выключено: <span>${disabled}</span></div>
+  `;
+}
+
+function toggleSelectAll() {
+  const checkboxes = document.querySelectorAll('.device-checkbox');
+  const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+  checkboxes.forEach(cb => {
+    cb.checked = !allChecked;
+    const id = cb.value;
+    deviceStates[id] = !allChecked;
+    const toggle = document.querySelector(`.device-toggle[data-id="${id}"]`);
+    if (toggle) {
+      toggle.checked = !allChecked;
+      toggle.parentElement.querySelector('.switch-label').textContent = !allChecked ? 'ВКЛ' : 'ВЫКЛ';
+    }
+  });
+  localStorage.setItem('device_states', JSON.stringify(deviceStates));
+  updateStats();
+}
+
+async function sendNotification() {
+  const checkboxes = document.querySelectorAll('.device-checkbox:checked');
+  const title = document.getElementById('notifTitle').value.trim();
+  const body = document.getElementById('notifBody').value.trim();
+  const icon = document.getElementById('notifIcon').value.trim();
+  const url = document.getElementById('notifUrl').value.trim();
+  
+  if (checkboxes.length === 0) {
+    showToast('❌ Выберите хотя бы одно устройство');
+    return;
+  }
+  if (!title || !body) {
+    showToast('❌ Заполните заголовок и текст');
+    return;
+  }
+  
+  const playerIds = Array.from(checkboxes).map(cb => cb.value);
+  const btn = document.getElementById('btnSend');
+  btn.disabled = true;
+  btn.textContent = '⏳ Отправка...';
+  
+  const payload = {
+    include_player_ids: playerIds,
+    contents: { en: body },
+    headings: { en: title },    small_icon: icon || 'https://via.placeholder.com/48',
+    url: url || window.location.href
+  };
+  
+  try {
+    const response = await fetch(`${API_BASE}/notifications`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SECRET_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    
+    if (data.id) {
+      showToast(`✅ Отправлено ${playerIds.length} устройствам!`);
+      // Сброс формы
+      document.getElementById('notifTitle').value = 'Важное уведомление!';
+      document.getElementById('notifBody').value = 'Нажмите чтобы открыть';
+      document.getElementById('notifIcon').value = '';
+      document.getElementById('notifUrl').value = '';
+      document.getElementById('iconImg').src = 'https://via.placeholder.com/48';
+      // Снять все галочки
+      document.querySelectorAll('.device-checkbox').forEach(cb => cb.checked = false);
+      updateStats();
+    } else {
+      showToast('❌ Ошибка: ' + (data.error || 'Неизвестно'));
+    }
+  } catch (error) {
+    showToast('❌ Ошибка отправки: ' + error.message);
+  }
+  
+  btn.disabled = false;
+  btn.textContent = '🚀 Отправить выбранным устройствам';
+}
+
+// Превью иконки
+document.getElementById('notifIcon').addEventListener('input', function() {
+  document.getElementById('iconImg').src = this.value || 'https://via.placeholder.com/48';
+});
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+</script>
+</body></html>
